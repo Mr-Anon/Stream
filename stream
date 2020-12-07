@@ -1,0 +1,24 @@
+ #!/bin/zsh
+    if [ $1 = "start" ]; then
+        rm ~/stream_modules.txt 2>/dev/null 
+        touch ~/stream_modules.txt
+        pactl load-module module-null-sink sink_name=Virtual1 1>> ~/stream_modules.txt
+        pactl load-module module-null-sink sink_name=Virtual2 1>>~/stream_modules.txt
+        pactl load-module module-loopback source=alsa_input.usb-0c76_USB_Audio_Device-00.mono-fallback sink=Virtual1 latency_msec=1 1>>~/stream_modules.txt
+        pactl load-module module-loopback source=Virtual2.monitor sink=Virtual1 rate=44000 adjust_time=0 latency_msec=1 1>>~/stream_modules.txt
+        pactl load-module module-loopback source=Virtual2.monitor sink=alsa_output.pci-0000_29_00.1.hdmi-stereo-extra1 latency_msec=1 1>>~/stream_modules.txt
+    elif [ $1 = "stop" ]; then
+        while read p; do
+        echo "unloading ${p}"
+        pactl unload-module $p 
+        done < ~/stream_modules.txt
+        rm ~/stream_modules.txt 2>/dev/null 
+    elif [ $1 = "instructions" ]; then
+        echo "1. Open pavucontrol"
+        echo "2. In playback change the streaming site's output to null-2"
+        echo "3. In recording change the host app input to null-1"
+    else
+        echo "Invalid input format."
+        echo "Format: stream [start/stop/instructions]"
+    fi
+
